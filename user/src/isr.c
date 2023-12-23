@@ -149,8 +149,8 @@ void LPUART8_IRQHandler(void)
     if(kLPUART_RxDataRegFullFlag & LPUART_GetStatusFlags(LPUART8))
     {
         // 接收中断
-        wireless_module_uart_handler();
-        pid_handler();
+        //wireless_module_uart_handler();
+        //pid_handler();
     }
         
     LPUART_ClearStatusFlags(LPUART8, kLPUART_RxOverrunFlag);    // 不允许删除

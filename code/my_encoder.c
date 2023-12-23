@@ -16,8 +16,7 @@ int16 encoder_data_2 = 0;
 //extern void my_motor_SetSpeed(bool dir, const uint32 speed);
 #include "my_motor.h"
 void my_encoder_init(void)
-{
-  
+{ 
 	encoder_quad_init(ENCODER_1, ENCODER_1_A, ENCODER_1_B);                     // 初始化编码器模块与引脚 正交解码编码器模式
     encoder_quad_init(ENCODER_2, ENCODER_2_A, ENCODER_2_B);                     // 初始化编码器模块与引脚 正交解码编码器模式
     pit_ms_init(PIT_CH, 10);
@@ -32,6 +31,8 @@ void pit_handler (void)
 	
     encoder_data_2 = encoder_get_count(ENCODER_2);                              // 获取编码器计数
     encoder_clear_count(ENCODER_2);                                             // 清空编码器计数                           // 清空编码器计数
-    
+
+	my_motor_SetSpeed_L(1,200);
+	my_motor_SetSpeed_R(1,200);
 }
 

@@ -65,17 +65,20 @@ int main(void)
     // 此处编写用户代码 例如外设初始化代码等
 	my_motor_init();
 	my_servo_init();
+	my_servo_duty(30);
+	tft180_set_dir(1);
+	tft180_init();
 	my_encoder_init();
-
 	my_adc_init();
-	wireless_uart_init();
+//	wireless_uart_init();
 	
 	//pit_ms_init(PIT_CH, 100);  
-	//interrupt_set_priority(PIT_PRIORITY, 0);
+	interrupt_set_priority(PIT_PRIORITY, 0);
 
 	system_delay_ms(1000);
 	tft180_set_dir(1);
 	tft180_init();
+	
 	gpio_set_level(MOTOR1_DIR, GPIO_LOW);  
 	gpio_set_level(MOTOR2_DIR, GPIO_LOW);
 	
@@ -114,8 +117,10 @@ int main(void)
 		adc_err_last = adc_err;
 		
 		my_servo_duty(45+adc_out);
-		if(adc_out>10)my_motor_SetSpeed_L(1,200-adc_out);
-		if(adc_out<-10)my_motor_SetSpeed_R(1,200+adc_out);
+		my_motor_SetSpeed_L(1,200);
+		my_motor_SetSpeed_R(1,200);
+//		if(adc_out>10)my_motor_SetSpeed_L(1,200-adc_out);
+//		if(adc_out<-10)my_motor_SetSpeed_R(1,200+adc_out);
 		//system_delay_ms(100);
 		
 	}

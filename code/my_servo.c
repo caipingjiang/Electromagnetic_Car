@@ -60,12 +60,12 @@ void my_servo_init(void)
 
 
     
-  void my_servo_duty(uint32 myduty)
-    {
-		if (myduty>60) myduty=60;
-		if (myduty<30) myduty=30;
-        pwm_set_duty(SERVO_MOTOR_PWM, (uint32)SERVO_MOTOR_DUTY(myduty));      
-    }
+void my_servo_duty(uint32 myduty)
+{
+	if (myduty>60) myduty=60;
+	if (myduty<30) myduty=30;
+	pwm_set_duty(SERVO_MOTOR_PWM, (uint32)SERVO_MOTOR_DUTY(myduty));      
+}
 
 	
 
