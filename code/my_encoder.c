@@ -32,7 +32,5 @@ void pit_handler (void)
     encoder_data_2 = encoder_get_count(ENCODER_2);                              // 获取编码器计数
     encoder_clear_count(ENCODER_2);                                             // 清空编码器计数                           // 清空编码器计数
 
-	my_motor_SetSpeed_L(1,200);
-	my_motor_SetSpeed_R(1,200);
 }
 

@@ -50,13 +50,16 @@
 #define MOTOR2_DIR               (C11 )
 #define MOTOR2_PWM               (PWM2_MODULE3_CHB_D3)   //右
 
+#define speed(x)					(x)
+uint8 speed=220;
 uint16 sum;
-uint16 ch1=0,ch2,ch3,ch4;
+uint16 ch1,ch2,ch3,ch4;
 int16 dif;
-int16 adc_err;
-int16 adc_err_last;
-int16 adc_out;
-float servo_kd=1.7 ;
+float adc_err;
+float adc_err_last;
+float adc_out;
+float servo_kd = 1.4 ;
+float servo_kp = 12;
 int main(void)
 {
     clock_init(SYSTEM_CLOCK_600M);  // 不可删除
@@ -65,63 +68,109 @@ int main(void)
     // 此处编写用户代码 例如外设初始化代码等
 	my_motor_init();
 	my_servo_init();
-	my_servo_duty(30);
-	tft180_set_dir(1);
-	tft180_init();
 	my_encoder_init();
 	my_adc_init();
-//	wireless_uart_init();
-	
-	//pit_ms_init(PIT_CH, 100);  
-	interrupt_set_priority(PIT_PRIORITY, 0);
-
-	system_delay_ms(1000);
 	tft180_set_dir(1);
 	tft180_init();
+	interrupt_set_priority(PIT_PRIORITY, 0);
+
+	key_index_enum key_index_array[KEY_NUMBER] = {KEY_1,KEY_2,KEY_3,KEY_4};
+	key_init(5);//初始化扫描周期（ms）
 	
-	gpio_set_level(MOTOR1_DIR, GPIO_LOW);  
-	gpio_set_level(MOTOR2_DIR, GPIO_LOW);
+	system_delay_ms(1000);
 	
+	tft180_show_string(0, 0,"AD:");
+	tft180_show_string(30,0, "p:");
+	tft180_show_string(30,20,"i:");
+	tft180_show_string(30,45,"p:");
+	tft180_show_string(30,65,"d:");
+	tft180_show_string(88,0,"speed");
+	tft180_show_uint(88,20,speed,3);
+	tft180_draw_line(25,0,25,100,RGB565_GREEN);
+	tft180_draw_line(85,0,85,100,RGB565_GREEN);
 	while(1)
 	{	
-		tft180_show_int(50,5,encoder_data_1,6);
-		tft180_show_int(50,50,encoder_data_2,6);
-	
-//		pwm_set_duty(MOTOR1_PWM,  1500);
-//		pwm_set_duty(MOTOR2_PWM,  1500);
-//		gpio_set_level(MOTOR1_DIR, GPIO_LOW);  
-//		gpio_set_level(MOTOR2_DIR, GPIO_LOW);
-//		pwm_set_duty(MOTOR1_PWM,  1500);
-//		pwm_set_duty(MOTOR2_PWM,  1500);
+		//显示数据
+		tft180_show_int(88,45, encoder_data_1,4);
+		tft180_show_int(88,65,encoder_data_2,4);
+		tft180_show_int(50,0, kp,2);
+		tft180_show_int(50,20,ki,2);
+		tft180_show_int(50,45,servo_kp,2);
+		tft180_show_float(50,65,servo_kd,3,2);
+		tft180_show_float(0,100,adc_out,2,1);
+		tft180_show_uint(0,20, ch1,3);
+	    tft180_show_uint(0,40, ch2,3);
+	    tft180_show_uint(0,60, ch3,3);												
+	    tft180_show_uint(0,80, ch4,3);
+		
+		//采集adc电压
 		ch1 = adc_mean_filter_convert(ADC_CHANNEL1,8);
 		ch2 = adc_mean_filter_convert(ADC_CHANNEL2,8);
 		ch3 = adc_mean_filter_convert(ADC_CHANNEL3,8);
 		ch4 = adc_mean_filter_convert(ADC_CHANNEL4,8);
 		
-//		if(ch1<2||ch4<2)
-//		{
-//			pwm_set_duty(MOTOR1_PWM,  0);
-//			pwm_set_duty(MOTOR2_PWM,  0);
-//			system_delay_ms(3000);
-//		}
-	    tft180_show_uint(0,20, ch1,3);
-	    tft180_show_uint(0,40, ch2,3);
-	    tft180_show_uint(0,60, ch3,3);												
-	    tft180_show_uint(0,80, ch4,3);
-		
+		//计算差比和
 		dif = ch1 - ch4;
 		sum = ch1 + ch4;
-		adc_err = (dif*20)/sum;
-		tft180_show_float(0,100,  adc_err,5,3);
-		adc_out = adc_err + servo_kd*(adc_err-adc_err_last);
+		
+		//pd计算舵机输出打角及后轮差速
+		adc_err = (float)(dif*servo_kp)/sum;
+		adc_out = (float)adc_err + (float)(servo_kd*(adc_err-adc_err_last));
 		adc_err_last = adc_err;
 		
 		my_servo_duty(45+adc_out);
-		my_motor_SetSpeed_L(1,200);
-		my_motor_SetSpeed_R(1,200);
-//		if(adc_out>10)my_motor_SetSpeed_L(1,200-adc_out);
-//		if(adc_out<-10)my_motor_SetSpeed_R(1,200+adc_out);
-		//system_delay_ms(100);
+		my_motor_SetSpeed_L(1, speed(speed)*(1-0.0135*adc_out));
+		my_motor_SetSpeed_R(1, speed(speed)*(1+0.0135*adc_out));
+		
+		
+		//按键扫描
+		key_scanner();
+        if( KEY_SHORT_PRESS == key_get_state(KEY_1) )                            // 任意按键短按
+        {
+            // 短按的按键在松开时 状态才会被 key_scanner 置位为 KEY_SHORT_PRESS
+            // 可以单独清除按键状态
+            key_clear_all_state();
+			if(kp-2>=0){kp-=2;}
+        }
+        if( KEY_SHORT_PRESS == key_get_state(KEY_2) )
+        {
+             key_clear_all_state();
+			if(kp+2<=30){kp+=2; }
+        }
+		if( KEY_SHORT_PRESS == key_get_state(KEY_3) )
+        {
+             key_clear_all_state();
+			if(ki-0.2>=0){ki-=0.2;}
+        }
+		if( KEY_SHORT_PRESS == key_get_state(KEY_4) )
+        {
+             key_clear_all_state();
+			if(ki+2<=30){ki+=2;}
+        }
+		
+		if( KEY_LONG_PRESS == key_get_state(KEY_1) )                           
+        {
+             // 一直按被识别为长按时，会一直置为长按状态，即使清除状态标志，也没用，
+			// 不放开就为长按状态
+            key_clear_all_state();
+			if(servo_kp-2>=0){servo_kp-=0.1;}
+        }
+        if( KEY_LONG_PRESS == key_get_state(KEY_2) )
+        {
+             key_clear_all_state();
+			if(servo_kp+2<=30){servo_kp+=0.1; }
+        }
+		if( KEY_LONG_PRESS == key_get_state(KEY_3) )
+        {
+             key_clear_all_state();
+			if(servo_kd-0.2>=0){servo_kd-=0.01;}
+        }
+		if( KEY_LONG_PRESS == key_get_state(KEY_4) )
+        {
+             key_clear_all_state();
+			if(servo_kd<=15){servo_kd+=0.01;}
+        }
+        
 		
 	}
 	

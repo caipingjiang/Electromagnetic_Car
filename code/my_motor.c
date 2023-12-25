@@ -6,24 +6,14 @@
 #define MOTOR2_DIR               (C11 )
 #define MOTOR2_PWM               (PWM2_MODULE3_CHB_D3)   //右
 
-//uint8 data_buffer[32];
-//uint8 data_len;
 
 float	out1,out2;
 int32	last_error1, last_error2; //< 上次误差
 
 
-float	kp = 10;       //P
-float	ki = 15;       //I
-//void pid_handler()
-//{
-//	kp = wireless_uart_read_buffer(data_buffer,32);
-//	if(data_len != 0)                                                       // 收到了消息 读取函数会返回实际读取到的数据个数
-//    {
-//       wireless_uart_send_buffer(data_buffer, data_len);
-//	}
-//	
-//}
+float	kp = 6.5;       		//P
+float	ki = 1.8;			//I
+
 void my_motor_init(void)
 {
 
@@ -56,9 +46,6 @@ int32 PidIncCtrl_L(float kp,float ki, int32 error)
 } 
 int32 PidIncCtrl_R(float kp,float ki, int32 error)
 {
-	
- 
-  
 	out2 += (kp * (error - last_error2) + ki * error);
 	last_error2 = error;
 	if(out2>8000) out2=8000;
@@ -71,7 +58,7 @@ int32 PidIncCtrl_R(float kp,float ki, int32 error)
 void my_motor_SetSpeed_L(bool dir, const uint32 speed)
 {
 	uint32 pwml=(uint32)PidIncCtrl_L(kp,ki,(speed-encoder_data_1));
-	tft180_show_uint(60,60,pwml,5);
+
 	if (dir == 1)				//正转
 	{
 		gpio_set_level(MOTOR1_DIR, GPIO_LOW);  
@@ -87,7 +74,7 @@ void my_motor_SetSpeed_L(bool dir, const uint32 speed)
 void my_motor_SetSpeed_R(bool dir, const uint32 speed)
 {
 	uint32 pwmr=(uint32)PidIncCtrl_R(kp,ki,(speed-encoder_data_2));
-	tft180_show_uint(60,60,pwmr,5);
+
 	if (dir == 1)				//正转
 	{
 		gpio_set_level(MOTOR2_DIR, GPIO_LOW); 
@@ -100,4 +87,11 @@ void my_motor_SetSpeed_R(bool dir, const uint32 speed)
 	}
 }
 
-       
+
+//PWM测试---------------------------------------
+//		pwm_set_duty(MOTOR1_PWM,  1500);
+//		pwm_set_duty(MOTOR2_PWM,  1500);
+//		gpio_set_level(MOTOR1_DIR, GPIO_LOW);  
+//		gpio_set_level(MOTOR2_DIR, GPIO_LOW);
+//		pwm_set_duty(MOTOR1_PWM,  1500);
+//		pwm_set_duty(MOTOR2_PWM,  1500);     
